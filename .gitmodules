@@ -4,3 +4,6 @@
 [submodule "src/hokuyo_node"]
 	path = src/hokuyo_node
 	url = https://github.com/ros-drivers/hokuyo_node.git
+[submodule "src/rtimulib_ros"]
+	path = src/rtimulib_ros
+	url = https://github.com/romainreignier/rtimulib_ros.git
