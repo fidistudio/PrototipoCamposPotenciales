@@ -5,63 +5,55 @@ import rospy
 import math
 from sensor_msgs.msg import LaserScan
 
-# Constantes
-UmbralActivacion = 1.0  # metros
+ACTIVATION_THRESHOLD = 1.0  # metros
 
-def callback(mensaje):
-    mitad = len(mensaje.ranges) // 2
+def compute_sector_average(ranges, angle_min, angle_increment):
+    x_coords, y_coords = [], []
 
-    X_izq, Y_izq = [], []
-    X_der, Y_der = [], []
+    for i, distance in enumerate(ranges):
+        if distance < ACTIVATION_THRESHOLD and not math.isinf(distance) and not math.isnan(distance):
+            angle = angle_min + i * angle_increment
+            x_coords.append(distance * math.cos(angle))
+            y_coords.append(distance * math.sin(angle))
 
-    for i in range(len(mensaje.ranges)):
-        dist = mensaje.ranges[i]
-        if dist < UmbralActivacion and not math.isinf(dist) and not math.isnan(dist):
-            ang = mensaje.angle_min + i * mensaje.angle_increment
-            x = dist * math.cos(ang)
-            y = dist * math.sin(ang)
+    if not x_coords:
+        return None
 
-            if i < mitad:
-                X_izq.append(x)
-                Y_izq.append(y)
-            else:
-                X_der.append(x)
-                Y_der.append(y)
+    x_avg = sum(x_coords) / len(x_coords)
+    y_avg = sum(y_coords) / len(y_coords)
+    return x_avg, y_avg
 
-    if X_izq and Y_izq:
-        x_izq_prom = sum(X_izq) / len(X_izq)
-        y_izq_prom = sum(Y_izq) / len(Y_izq)
+
+def print_sector_average(sector_name, avg_coords):
+    if avg_coords is None:
+        print("No hay datos válidos en sector {}".format(sector_name))
     else:
-        x_izq_prom = y_izq_prom = None
+        x, y = avg_coords
+        print("Promedio sector {}: ({:.3f}, {:.3f})".format(sector_name, x*100, y*100))
 
-    if X_der and Y_der:
-        x_der_prom = sum(X_der) / len(X_der)
-        y_der_prom = sum(Y_der) / len(Y_der)
-    else:
-        x_der_prom = y_der_prom = None
 
-    if x_izq_prom is not None and y_izq_prom is not None:
-        print("Promedio sector derecho: (%.3f, %.3f)" % (x_izq_prom*100, y_izq_prom*100))
-    else:
-        print("No hay datos válidos en sector derecho")
+def laser_callback(msg):
+    mitad = len(msg.ranges) // 2
 
-    if x_der_prom is not None and y_der_prom is not None:
-        print("Promedio sector izquierdo: (%.3f, %.3f)" % (x_der_prom*100, y_der_prom*100))
-    else:
-        print("No hay datos válidos en sector izquierdo")
+    left_sector = msg.ranges[mitad:]
+    right_sector = msg.ranges[:mitad]
 
+    left_avg = compute_sector_average(left_sector, msg.angle_min, msg.angle_increment)
+    right_avg = compute_sector_average(right_sector, msg.angle_min + mitad*msg.angle_increment, msg.angle_increment)
+
+    print_sector_average("izquierdo", left_avg)
+    print_sector_average("derecho", right_avg)
     print("--------------\n")
 
 
-def nodo():
+def main():
     rospy.init_node('nodo_detect_obstacle')
-    scan_sub = rospy.Subscriber('/scan', LaserScan, callback)
+    rospy.Subscriber('/scan', LaserScan, laser_callback)
     rospy.spin()
-
 
 
 if __name__ == '__main__':
     try:
-        nodo()
+        main()
     except rospy.ROSInterruptException:
-        passf
+        pass
