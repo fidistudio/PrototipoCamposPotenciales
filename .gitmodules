@@ -7,3 +7,6 @@
 [submodule "src/rtimulib_ros"]
 	path = src/rtimulib_ros
 	url = https://github.com/romainreignier/rtimulib_ros.git
+[submodule "rtimulib_ros"]
+	path = rtimulib_ros
+	url = https://github.com/romainreignier/rtimulib_ros.git
