@@ -1,2 +1,2 @@
-campos_potenciales:driver_common/driver_base:driver_common/driver_common:driver_common/timestamp_tools:hokuyo_node:rtimulib_ros:ryuw122_tools
+campos_potenciales:driver_common/driver_base:driver_common/driver_common:driver_common/timestamp_tools:hokuyo_node:nav_apf_smach:rtimulib_ros:ryuw122_tools
 -DCATKIN_DEVEL_PREFIX=/home/jetsonnano/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/jetsonnano/catkin_ws/install -G Unix Makefiles

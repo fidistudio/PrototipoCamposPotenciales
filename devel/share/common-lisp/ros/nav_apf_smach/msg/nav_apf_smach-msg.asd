@@ -1,0 +1,38 @@
+
+(cl:in-package :asdf)
+
+(defsystem "nav_apf_smach-msg"
+  :depends-on (:roslisp-msg-protocol :roslisp-utils :actionlib_msgs-msg
+               :geometry_msgs-msg
+               :std_msgs-msg
+)
+  :components ((:file "_package")
+    (:file "DriveToPoseAction" :depends-on ("_package_DriveToPoseAction"))
+    (:file "_package_DriveToPoseAction" :depends-on ("_package"))
+    (:file "DriveToPoseActionFeedback" :depends-on ("_package_DriveToPoseActionFeedback"))
+    (:file "_package_DriveToPoseActionFeedback" :depends-on ("_package"))
+    (:file "DriveToPoseActionGoal" :depends-on ("_package_DriveToPoseActionGoal"))
+    (:file "_package_DriveToPoseActionGoal" :depends-on ("_package"))
+    (:file "DriveToPoseActionResult" :depends-on ("_package_DriveToPoseActionResult"))
+    (:file "_package_DriveToPoseActionResult" :depends-on ("_package"))
+    (:file "DriveToPoseFeedback" :depends-on ("_package_DriveToPoseFeedback"))
+    (:file "_package_DriveToPoseFeedback" :depends-on ("_package"))
+    (:file "DriveToPoseGoal" :depends-on ("_package_DriveToPoseGoal"))
+    (:file "_package_DriveToPoseGoal" :depends-on ("_package"))
+    (:file "DriveToPoseResult" :depends-on ("_package_DriveToPoseResult"))
+    (:file "_package_DriveToPoseResult" :depends-on ("_package"))
+    (:file "NextWaypointAction" :depends-on ("_package_NextWaypointAction"))
+    (:file "_package_NextWaypointAction" :depends-on ("_package"))
+    (:file "NextWaypointActionFeedback" :depends-on ("_package_NextWaypointActionFeedback"))
+    (:file "_package_NextWaypointActionFeedback" :depends-on ("_package"))
+    (:file "NextWaypointActionGoal" :depends-on ("_package_NextWaypointActionGoal"))
+    (:file "_package_NextWaypointActionGoal" :depends-on ("_package"))
+    (:file "NextWaypointActionResult" :depends-on ("_package_NextWaypointActionResult"))
+    (:file "_package_NextWaypointActionResult" :depends-on ("_package"))
+    (:file "NextWaypointFeedback" :depends-on ("_package_NextWaypointFeedback"))
+    (:file "_package_NextWaypointFeedback" :depends-on ("_package"))
+    (:file "NextWaypointGoal" :depends-on ("_package_NextWaypointGoal"))
+    (:file "_package_NextWaypointGoal" :depends-on ("_package"))
+    (:file "NextWaypointResult" :depends-on ("_package_NextWaypointResult"))
+    (:file "_package_NextWaypointResult" :depends-on ("_package"))
+  ))

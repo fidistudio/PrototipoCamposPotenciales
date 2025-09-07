@@ -1,0 +1,8 @@
+# Goal: pose a la que moverse
+geometry_msgs/PoseStamped target
+---
+# Result
+bool arrived
+---
+# Feedback
+float32 remaining_distance

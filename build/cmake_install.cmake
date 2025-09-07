@@ -138,6 +138,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/jetsonnano/catkin_ws/build/campos_potenciales/cmake_install.cmake")
   include("/home/jetsonnano/catkin_ws/build/hokuyo_node/cmake_install.cmake")
   include("/home/jetsonnano/catkin_ws/build/rtimulib_ros/cmake_install.cmake")
+  include("/home/jetsonnano/catkin_ws/build/nav_apf_smach/cmake_install.cmake")
 
 endif()
 

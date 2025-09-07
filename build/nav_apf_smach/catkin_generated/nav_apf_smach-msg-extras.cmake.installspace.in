@@ -1,0 +1,2 @@
+set(nav_apf_smach_MESSAGE_FILES "msg/NextWaypointAction.msg;msg/NextWaypointActionGoal.msg;msg/NextWaypointActionResult.msg;msg/NextWaypointActionFeedback.msg;msg/NextWaypointGoal.msg;msg/NextWaypointResult.msg;msg/NextWaypointFeedback.msg;msg/DriveToPoseAction.msg;msg/DriveToPoseActionGoal.msg;msg/DriveToPoseActionResult.msg;msg/DriveToPoseActionFeedback.msg;msg/DriveToPoseGoal.msg;msg/DriveToPoseResult.msg;msg/DriveToPoseFeedback.msg")
+set(nav_apf_smach_SERVICE_FILES "")
