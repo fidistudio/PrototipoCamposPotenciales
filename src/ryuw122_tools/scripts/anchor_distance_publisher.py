@@ -31,7 +31,7 @@ class AnchorDistancePublisher(object):
     def _setup_parameters(self):
         self.antennas = rospy.get_param('~antennas', ['ANTENA01', 'ANTENA02', 'ANTENA03'])
         self.distances = {ant: None for ant in self.antennas}
-        self.alpha = rospy.get_param('~alpha', 0.3)  # filtro exponencial
+        self.alpha = rospy.get_param('~alpha', 0.3)  # filtro exponencial, cuanto más bajo, más suavizado
         self.max_jump = rospy.get_param('~max_jump', 0.2)  # descarte de outliers en metros
         self.send_rate_hz = rospy.get_param('~send_rate', 1) #Hz
         self.read_period = rospy.get_param('~read_period', 0.05)
