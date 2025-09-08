@@ -9,7 +9,7 @@ from sensor_msgs.msg import Imu
 BROADCAST_RATE_HZ = 30  # Frecuencia de publicación en Hz
 
 
-class MapToBaseBroadcaster:
+class MapToBaseBroadcaster(object):
     """Nodo que publica la transformada de 'map' a 'base_link' usando UWB e IMU."""
 
     def __init__(self):
@@ -30,18 +30,18 @@ class MapToBaseBroadcaster:
     # ---------------------------
     # Callbacks de sensores
     # ---------------------------
-    def _handle_uwb_pose(self, msg: Pose2D):
+    def _handle_uwb_pose(self, msg):
         """Actualiza la posición XY a partir del UWB."""
         self._x = msg.x
         self._y = msg.y
 
-    def _handle_imu_orientation(self, msg: Imu):
+    def _handle_imu_orientation(self, msg):
         """Procesa la orientación cruda de la IMU y aplica calibración de yaw."""
         imu_quat = (
             msg.orientation.x,
             msg.orientation.y,
             msg.orientation.z,
-            msg.orientation.w,
+            msg.orientation.w
         )
         self._orientation_quat = self._compute_calibrated_orientation(imu_quat)
 
@@ -55,7 +55,7 @@ class MapToBaseBroadcaster:
         if self._initial_yaw is None:
             # Guardamos la orientación inicial como referencia de 0°
             self._initial_yaw = yaw
-            rospy.loginfo("Calibración inicial de yaw realizada (%.3f rad)", self._initial_yaw)
+            rospy.loginfo("Calibración inicial de yaw realizada (%.3f rad)" % self._initial_yaw)
 
         yaw_corrected = yaw - self._initial_yaw
         return tf.transformations.quaternion_from_euler(roll, pitch, yaw_corrected)
@@ -70,7 +70,7 @@ class MapToBaseBroadcaster:
             self._orientation_quat,
             rospy.Time.now(),
             "base_link",
-            "map",
+            "map"
         )
 
     # ---------------------------

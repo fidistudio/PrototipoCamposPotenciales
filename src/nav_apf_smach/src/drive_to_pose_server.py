@@ -7,33 +7,33 @@ import serial
 from nav_apf_smach.msg import DriveToPoseAction, DriveToPoseResult, DriveToPoseFeedback
 
 
-class ESP32SerialInterface:
+class ESP32SerialInterface(object):
     """Gestiona la comunicación serial con la ESP32."""
 
-    def __init__(self, port: str = "/dev/ttyUSB0", baudrate: int = 115200, timeout: float = 1.0):
+    def __init__(self, port="/dev/ttyUSB0", baudrate=115200, timeout=1.0):
         self.serial = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
-        rospy.loginfo(f"Conectado a ESP32 en {port} a {baudrate} bps.")
+        rospy.loginfo("Conectado a ESP32 en {} a {} bps.".format(port, baudrate))
 
-    def send_goal(self, x: float, y: float) -> None:
+    def send_goal(self, x, y):
         """Envía un objetivo de navegación a la ESP32 en formato CSV."""
-        message = f"{x:.2f},{y:.2f}\n"
+        message = "{:.2f},{:.2f}\n".format(x, y)
         self.serial.write(message.encode("utf-8"))
-        rospy.loginfo(f"Objetivo enviado a ESP32: {message.strip()}")
+        rospy.loginfo("Objetivo enviado a ESP32: {}".format(message.strip()))
 
-    def read_line(self) -> str:
+    def read_line(self):
         """Lee una línea desde la ESP32, decodificada y limpia."""
         try:
             line = self.serial.readline().decode("utf-8").strip()
             return line
-        except Exception as e:
-            rospy.logwarn(f"Error al leer de ESP32: {e}")
+        except Exception, e: 
+            rospy.logwarn("Error al leer de ESP32: {}".format(e))
             return ""
 
 
-class DriveToPoseActionServer:
+class DriveToPoseActionServer(object):
     """Servidor de acción ROS que envía metas a la ESP32 y gestiona feedback/result."""
 
-    def __init__(self, serial_interface: ESP32SerialInterface):
+    def __init__(self, serial_interface):
         self.serial_interface = serial_interface
         self.action_server = actionlib.SimpleActionServer(
             name="drive_to_pose",
@@ -65,26 +65,26 @@ class DriveToPoseActionServer:
                 self._handle_error(response)
                 break
 
-    def _handle_distance_feedback(self, message: str) -> None:
+    def _handle_distance_feedback(self, message):
         """Procesa feedback de distancia desde la ESP32."""
         try:
             distance = float(message.split(":")[1])
             feedback = DriveToPoseFeedback(remaining_distance=distance)
             self.action_server.publish_feedback(feedback)
-            rospy.loginfo(f"Feedback distancia restante: {distance:.2f} m")
+            rospy.loginfo("Feedback distancia restante: {:.2f} m".format(distance))
         except ValueError:
-            rospy.logwarn(f"Formato inválido en feedback: {message}")
+            rospy.logwarn("Formato inválido en feedback: {}".format(message))
 
-    def _handle_success(self) -> None:
+    def _handle_success(self):
         """Marca la acción como completada exitosamente."""
         result = DriveToPoseResult(arrived=True)
         self.action_server.set_succeeded(result)
         rospy.loginfo("Objetivo alcanzado (ARRIVED).")
 
-    def _handle_error(self, message: str) -> None:
+    def _handle_error(self, message):
         """Aborta la acción en caso de error reportado por la ESP32."""
         self.action_server.set_aborted(text=message)
-        rospy.logerr(f"Acción abortada: {message}")
+        rospy.logerr("Acción abortada: {}".format(message))
 
 
 def main():
@@ -94,8 +94,8 @@ def main():
         serial_interface = ESP32SerialInterface(port="/dev/ttyUSB0", baudrate=115200)
         DriveToPoseActionServer(serial_interface)
         rospy.spin()
-    except serial.SerialException as e:
-        rospy.logfatal(f"No se pudo abrir puerto serial: {e}")
+    except serial.SerialException, e:
+        rospy.logfatal("No se pudo abrir puerto serial: {}".format(e))
 
 
 if __name__ == "__main__":

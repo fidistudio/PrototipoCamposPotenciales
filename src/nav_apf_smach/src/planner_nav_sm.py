@@ -16,10 +16,13 @@ class CheckGoalReached(smach.State):
         smach.State.__init__(self, outcomes=['done', 'navigate'], input_keys=['goal_reached_in'])
 
     def execute(self, userdata):
-        return 'done' if userdata.goal_reached_in else 'navigate'
+        if userdata.goal_reached_in:
+            return 'done'
+        else:
+            return 'navigate'
 
 
-def create_target_pose() -> PoseStamped:
+def create_target_pose():
     """Construye la meta final a partir de parámetros de ROS."""
     pose = PoseStamped()
     pose.header.frame_id = 'map'
@@ -103,7 +106,7 @@ def main():
     sis.start()
 
     outcome = sm.execute()
-    rospy.loginfo(f"Máquina de estados finalizada con outcome: {outcome}")
+    rospy.loginfo("Máquina de estados finalizada con outcome: {}".format(outcome))
 
     rospy.spin()
     sis.stop()

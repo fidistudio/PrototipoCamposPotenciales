@@ -9,66 +9,68 @@ import actionlib
 from nav_apf_smach.msg import NextWaypointAction, NextWaypointResult, NextWaypointFeedback
 
 # ===========================
-# Parámetros globales
+# Constantes
 # ===========================
-STEP_SIZE = 0.5        #Metros
-GOAL_TOLERANCE = 0.15  #Metros
+STEP_SIZE = 0.5        # metros
+GOAL_TOLERANCE = 0.15  # metros
 FRAME_WORLD = 'map'
 FRAME_BASE = 'base_link'
 
-# Parámetros campos potenciales
-d0 = 5.0       #Distancia donde el campo repulsivo deja de tener efecto en metros
-epsilon1 = 1.0 #Constante atractiva
-eta = 2.0      #Constante repulsiva
+# Campos potenciales
+ATTRACTIVE_GAIN = 1.0
+REPULSIVE_GAIN = 2.0
+REPULSIVE_DISTANCE = 5.0
 
 # ===========================
 # Funciones de fuerza
 # ===========================
-def FuerzaAtractiva(q, q_dest):
-    vector = q - q_dest
-    distancia = np.linalg.norm(vector)
-    if distancia < 10:
-        return epsilon1 * vector
+def attractive_force(current_pos, goal_pos):
+    """Calcula la fuerza atractiva hacia el objetivo"""
+    vector = current_pos - goal_pos
+    distance = np.linalg.norm(vector)
+    if distance < 10.0:
+        return ATTRACTIVE_GAIN * vector
     return np.zeros(2)
 
-def FuerzaRepulsiva(q, q_obst):
-    vector = q - q_obst
-    distancia = np.linalg.norm(vector)
-    if distancia < d0 and distancia != 0:
-        return -eta * ((1/distancia - 1/d0) * (1/(distancia**2))) * (vector / distancia)
+def repulsive_force(current_pos, obstacle_pos):
+    """Calcula la fuerza repulsiva de un obstáculo"""
+    vector = current_pos - obstacle_pos
+    distance = np.linalg.norm(vector)
+    if 0 < distance < REPULSIVE_DISTANCE:
+        return -REPULSIVE_GAIN * ((1.0/distance - 1.0/REPULSIVE_DISTANCE) * (1.0 / (distance**2))) * (vector / distance)
     return np.zeros(2)
 
-def MoverRobot(q, f_total):
-    magnitud = np.linalg.norm(f_total)
-    if magnitud == 0:
-        return q.copy()
-    return q - STEP_SIZE * (f_total / magnitud)
+def move_robot(current_pos, total_force):
+    """Calcula la siguiente posición del robot basado en la fuerza total"""
+    magnitude = np.linalg.norm(total_force)
+    if magnitude == 0:
+        return current_pos.copy()
+    return current_pos - STEP_SIZE * (total_force / magnitude)
 
-def calcular_siguiente_waypoint(pos_actual, objetivo, obstaculos):
-    """Calcula siguiente waypoint usando las fuerzas del campo potencial"""
-    f_attr = FuerzaAtractiva(pos_actual, objetivo)
+def compute_next_waypoint(current_pos, goal_pos, obstacles):
+    """Calcula el siguiente waypoint usando fuerzas de campo potencial"""
+    f_attr = attractive_force(current_pos, goal_pos)
     f_rep = np.zeros(2)
-    for obst in obstaculos:
-        f_rep += FuerzaRepulsiva(pos_actual, obst)
-    
+    for obs in obstacles:
+        f_rep += repulsive_force(current_pos, obs)
     f_total = f_attr + f_rep
-    siguiente_pos = MoverRobot(pos_actual, f_total)
+    next_pos = move_robot(current_pos, f_total)
 
     waypoint = PoseStamped()
     waypoint.header.stamp = rospy.Time.now()
     waypoint.header.frame_id = FRAME_WORLD
-    waypoint.pose.position.x = siguiente_pos[0]
-    waypoint.pose.position.y = siguiente_pos[1]
-    waypoint.pose.orientation.w = 0.0
+    waypoint.pose.position.x = next_pos[0]
+    waypoint.pose.position.y = next_pos[1]
+    waypoint.pose.orientation.w = 1.0
 
     return waypoint, f_attr, f_rep, f_total
 
 # ===========================
 # Servidor de acción APF
 # ===========================
-class APFPlannerServer:
+class APFPlannerServer(object):
     def __init__(self):
-        self.listener = tf.TransformListener()
+        self.tf_listener = tf.TransformListener()
         self.server = actionlib.SimpleActionServer(
             'apf_planner',
             NextWaypointAction,
@@ -76,61 +78,50 @@ class APFPlannerServer:
             auto_start=False
         )
         self.server.start()
-        rospy.loginfo("APF Planner ready.")
+        rospy.loginfo("APF Planner server ready.")
 
-    # ---------------------------
-    # Callback de ejecución
-    # ---------------------------
     def execute_cb(self, goal):
-        result = NextWaypointResult()
-        feedback = NextWaypointFeedback()
-
-        current_position = self.get_current_position()
-        if current_position is None:
+        current_pos = self.get_current_position()
+        if current_pos is None:
             self.server.set_aborted(text="TF unavailable")
             return
 
-        goal_position = np.array([
-            goal.target.pose.position.x,
-            goal.target.pose.position.y
-        ])
+        goal_pos = np.array([goal.target.pose.position.x,
+                             goal.target.pose.position.y])
 
-        # Ejemplo de obstáculos; en robot real reemplazar con datos de sensores o mapa
-        obstaculos = [np.array([2.0, 2.0]), np.array([3.0, 1.5])]
+        # Obstáculos de ejemplo
+        obstacles = [np.array([2.0, 2.0]), np.array([3.0, 1.5])]
 
-        # Calcular distancia al objetivo
-        vector_to_goal = goal_position - current_position
-        distance_to_goal = float(np.linalg.norm(vector_to_goal))
+        distance_to_goal = float(np.linalg.norm(goal_pos - current_pos))
 
-        # Publicar feedback
-        waypoint, f_attr, f_rep, f_total = calcular_siguiente_waypoint(current_position, goal_position, obstaculos)
+        waypoint, f_attr, f_rep, f_total = compute_next_waypoint(current_pos, goal_pos, obstacles)
+
+        feedback = NextWaypointFeedback()
         feedback.remaining_distance = distance_to_goal
-        feedback.f_attr = Vector3(*f_attr, 0.0)
-        feedback.f_rep = Vector3(*f_rep, 0.0)
+        feedback.f_attr = Vector3(f_attr[0], f_attr[1], 0.0)
+        feedback.f_rep = Vector3(f_rep[0], f_rep[1], 0.0)
         self.server.publish_feedback(feedback)
 
-        # Revisar si se alcanzó el objetivo
+        result = NextWaypointResult()
         if distance_to_goal < GOAL_TOLERANCE:
             result.goal_reached = True
             result.next_waypoint = goal.target
-            self.server.set_succeeded(result)
-            return
+            rospy.loginfo("Goal reached.")
+        else:
+            result.goal_reached = False
+            result.next_waypoint = waypoint
+            rospy.loginfo("Next waypoint computed.")
 
-        # Devolver siguiente waypoint
-        result.goal_reached = False
-        result.next_waypoint = waypoint
         self.server.set_succeeded(result)
 
-    # ---------------------------
-    # Obtener posición actual del robot
-    # ---------------------------
     def get_current_position(self):
+        """Obtiene la posición actual del robot desde TF"""
         try:
-            self.listener.waitForTransform(FRAME_WORLD, FRAME_BASE, rospy.Time(0), rospy.Duration(1.0))
-            translation, _ = self.listener.lookupTransform(FRAME_WORLD, FRAME_BASE, rospy.Time(0))
-            return np.array([translation[0], translation[1]])
-        except (tf.Exception, tf.LookupException, tf.ConnectivityException) as e:
-            rospy.logerr(f"TF error: {e}")
+            self.tf_listener.waitForTransform(FRAME_WORLD, FRAME_BASE, rospy.Time(0), rospy.Duration(1.0))
+            trans, _ = self.tf_listener.lookupTransform(FRAME_WORLD, FRAME_BASE, rospy.Time(0))
+            return np.array([trans[0], trans[1]])
+        except (tf.Exception, tf.LookupException, tf.ConnectivityException), e:
+            rospy.logerr("TF error: %s", e)
             return None
 
 # ===========================
