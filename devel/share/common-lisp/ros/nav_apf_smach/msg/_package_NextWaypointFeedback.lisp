@@ -5,4 +5,6 @@
           F_ATTR
           F_REP-VAL
           F_REP
+          DEBUG_INFO-VAL
+          DEBUG_INFO
 ))

@@ -1,11 +1,12 @@
-# Goal: destino global (normalmente en 'map')
+# Goal
 geometry_msgs/PoseStamped target
 ---
-# Result: siguiente waypoint y si ya se alcanzó el destino
+# Result
 geometry_msgs/PoseStamped next_waypoint
 bool goal_reached
 ---
-# Feedback: depuración (distancia y fuerzas)
+# Feedback
 float32 remaining_distance
 geometry_msgs/Vector3 f_attr
 geometry_msgs/Vector3 f_rep
+string debug_info
